@@ -96,6 +96,76 @@ Grid *SearchAdjacent(int i, int j)
     return Adjacents;
 }
 
+int Score(Board TempBoard, Player player)
+{
+    int score = 0;
+    int myOrb = 0;
+    int enemyOrb = 0;
+    bool vulnerable = false;
+    char playerColor = player.get_color();
+    char enemyColor;
+    if(playerColor == 'r')
+    {
+        enemyColor = 'b';
+    }
+    else
+    {
+        enemyColor = 'r';
+    }
+    for(int i=0; i<ROW; i++)
+    {
+        for(int j=0; j<COL; j++)
+        {
+            if(TempBoard.get_cell_color(i,j) == playerColor)
+            {
+                myOrb += TempBoard.get_orbs_num(i, j);
+                Grid *Adjacents = SearchAdjacent(i, j);
+                for(int k=0; k<8; k++)
+                {
+                    if(Adjacents[k].x == -1 && Adjacents[k].y == -1)
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        if(TempBoard.get_cell_color(Adjacents[k].x, Adjacents[k].y) == enemyColor && TempBoard.get_orbs_num(Adjacents[k].x, Adjacents[k].y) == TempBoard.get_capacity(Adjacents[k].x, Adjacents[k].y)-1)
+                        {
+                            if(TempBoard.get_orbs_num(i,j) < TempBoard.get_capacity(i,j)-1)
+                            {
+                                score -= (9 - TempBoard.get_capacity(Adjacents[k].x, Adjacents[k].y));
+                                vulnerable = true;
+                            }
+                        }
+                    }
+                }
+                if(!vulnerable)
+                {
+                    if(TempBoard.get_capacity(i,j) == 3)
+                    {
+                        score += 5;
+                    }
+                    else if(TempBoard.get_capacity(i, j) == 5)
+                    {
+                        score += 4;
+                    }
+
+                    if(TempBoard.get_orbs_num(i,j) == TempBoard.get_capacity(i, j)-1)
+                    {
+                        score += 4;
+                    }
+
+                }
+            }
+            else
+            {
+                enemyOrb += TempBoard.get_orbs_num(i, j);
+            }
+        }
+    }
+    score += myOrb;
+    return score;
+}
+
 void algorithm_A(Board board, Player player, int index[]){
     //////your algorithm design///////////
 
