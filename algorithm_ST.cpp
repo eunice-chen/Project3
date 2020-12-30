@@ -86,6 +86,10 @@ Grid *SearchAdjacent(int i, int j)
     {
         Adjacents[num].setPosition(i+1, j-1); num++;
     }
+    else if(i==ROW-1 && COL-1)
+    {
+        Adjacents[num].setPosition(i-1, j-1); num++;
+    }
     else
     {
         Adjacents[num].setPosition(i-1, j-1); num++;
@@ -94,6 +98,14 @@ Grid *SearchAdjacent(int i, int j)
         Adjacents[num].setPosition(i+1, j+1); num++;
     }
     return Adjacents;
+}
+
+Board move(Board TempBoard, Grid position, Player player)
+{
+    char playerColor = player.get_color();
+    TempBoard.place_orb(position.x, position.y, &player);
+
+    return TempBoard;
 }
 
 int Score(Board TempBoard, Player player)
@@ -166,8 +178,115 @@ int Score(Board TempBoard, Player player)
     return score;
 }
 
+int **bestn(Board TempBoard, Player player)
+{
+    int **conf = new int* [ROW];
+    for(int i = 0; i < ROW; i++)
+    {
+        conf[i] = new int[COL];
+    }
+    for (int i=0; i<ROW; i++)
+    {
+        for(int j=0; j<COL; j++)
+        {
+            conf[i][j] = -10000;
+        }
+    }
+
+    char playerColor = player.get_color();
+
+    for(int i = 0; i < ROW; i++)
+    {
+        for(int j = 0; j < COL; j++)
+        {
+            if(TempBoard.get_cell_color(i, j) == playerColor || TempBoard.get_cell_color(i, j) == 'w')
+            {
+                Grid position;
+                position.setPosition(i, j);
+                conf[i][j] = Score(move(TempBoard, position, player), player);
+            }
+        }
+    }
+    return conf;
+}
+
+std::pair<Grid, int> minimax(Board TempBoard, int depth, int breadth, Player player)
+{
+    int **best_move = bestn(TempBoard, player);
+    Grid best_position[breadth];
+    int best_value[breadth];
+    Grid best_nextPosition;
+    int best_nextValue;
+    char playerColor = player.get_color();
+    char enemyColor;
+    if(playerColor == 'r')
+    {
+        enemyColor = 'b';
+    }
+    else
+    {
+        enemyColor = 'r';
+    }
+
+    for(int i=0; i<breadth; i++)
+    {
+        best_value[i] = -10000;
+    }
+
+    for (int i=0; i<ROW; i++)
+    {
+        for(int j=0; j<COL; j++)
+        {
+            if(TempBoard.get_cell_color(i,j) == enemyColor) continue;
+            for (int k=0; k< breadth; k++)
+            {
+                if(best_move[i][j] > best_value[k])
+                {
+                    for(int l=breadth-1; l >= k+1; l--)
+                    {
+                        best_value[l] = best_value[l-1];
+                        best_position[l].setPosition(best_position[l-1].x, best_position[l-1].y);
+                    }
+                    best_value[k] = best_move[i][j];
+                    best_position[k].setPosition(i, j);
+                    break;
+                }
+            }
+        }
+    }
+
+    for(int i=0; i<ROW; i++)
+    {
+        delete[]best_move[i];
+    }
+    delete[]best_move;
+
+    best_nextPosition = best_position[0];
+    best_nextValue = Score(move(TempBoard, best_nextPosition, player), player);
+
+    if(depth==1)
+    {
+        return std::make_pair(best_nextPosition, best_nextValue);
+    }
+
+    for (int i=0; i<breadth; i++)
+    {
+        Board newBoard(move(TempBoard, best_position[i], player));
+        pair <Grid, int> best_move = minimax(newBoard, depth-1, breadth, player);
+        int value = best_move.second;
+        if(value > best_nextValue)
+        {
+            best_nextValue = value;
+            best_nextPosition = best_position[i];
+        }
+    }
+    return std::make_pair(best_nextPosition, best_nextValue);
+}
+
 void algorithm_A(Board board, Player player, int index[]){
     //////your algorithm design///////////
-
     TempBoard = board;
+    pair <Grid, int> result = minimax(TempBoard, 2, 12, player);
+    index[0] = result.first.x;
+    index[1] = result.first.y;
 }
