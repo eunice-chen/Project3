@@ -40,6 +40,7 @@ typedef struct Coordinate
 Grid *SearchAdjacent(int i, int j)
 {
     Grid *Adjacents = new Grid[8];
+
     for(int k = 0; k < 8; k++)
     {
         Adjacents[k].setPosition(-1,-1);
